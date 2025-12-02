@@ -1,0 +1,17 @@
+name: emuru-env
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch=2.1.2
+  - torchvision=0.16.2
+  - pytorch-cuda=11.8
+  - pip
+  - pip:
+      - transformers>=4.41
+      - pillow
+      - huggingface_hub
+      - safetensors
+      - accelerate

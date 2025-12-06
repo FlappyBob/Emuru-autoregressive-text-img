@@ -17,7 +17,7 @@ import evaluate
 
 from utils import TrainState
 from models.htr import HTR, HTRConfig
-from custom_datasets import DataLoaderManager
+from custom_datasets import ours_DataLoaderManager
 from models.teacher_forcing import NoisyTeacherForcing
 from models.smooth_ce import SmoothCrossEntropyLoss
 
@@ -89,6 +89,8 @@ def train():
     parser.add_argument("--mixed_precision", type=str, default="no")
     parser.add_argument("--checkpoints_total_limit", type=int, default=5)
 
+    parser.add_argument("--pretrained_htr_dir", type=str, default=None, help="Path to a directory with a pretrained HTR (config.json + model.safetensors).")
+
     args = parser.parse_args()
 
     args.use_ema = args.use_ema == "True"
@@ -125,11 +127,17 @@ def train():
         args.output_dir.mkdir(parents=True, exist_ok=True)
         args.logging_dir.mkdir(parents=True, exist_ok=True)
 
-    with open(args.htr_config, "r") as f:
-        config_dict = json.load(f)
-
-    config = HTRConfig(**config_dict)
-    htr = HTR(config)
+    if args.pretrained_htr_dir is not None:
+        # Load config + weights from the HF-style folder
+        logger.info(f"Loading pretrained HTR from {args.pretrained_htr_dir}")
+        htr = HTR.from_pretrained(args.pretrained_htr_dir)
+        config = htr.config
+    else:
+        with open(args.htr_config, "r") as f:
+            config_dict = json.load(f)
+        config = HTRConfig(**config_dict)
+        htr = HTR(config)
+    
     htr.requires_grad_(True)
 
     if args.use_ema:
@@ -144,9 +152,9 @@ def train():
         weight_decay=args.adam_weight_decay,
         eps=args.adam_epsilon)
 
-    data_loader = DataLoaderManager(
-        train_pattern=("https://huggingface.co/datasets/blowing-up-groundhogs/font-square-v2/resolve/main/tars/train/{000000..000498}.tar"),
-        eval_pattern=("https://huggingface.co/datasets/blowing-up-groundhogs/font-square-v2/resolve/main/tars/train/{000499..000499}.tar"),
+    data_loader = ours_DataLoaderManager(
+        train_pattern=("https://hf-mirror.com/datasets/blowing-up-groundhogs/font-square-pretrain-20M/resolve/main/{000000..000499}.tar"),
+        eval_pattern=("https://hf-mirror.com/datasets/blowing-up-groundhogs/font-square-pretrain-20M/resolve/main/{000500..000509}.tar"),
         train_batch_size=args.train_batch_size,
         eval_batch_size=args.eval_batch_size,
         num_workers=4,

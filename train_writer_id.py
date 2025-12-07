@@ -129,7 +129,6 @@ def train():
         ema_writer_id = WriterID(config)
         ema_writer_id = EMAModel(ema_writer_id.parameters(), model_cls=WriterID, model_config=config)
         accelerator.register_for_checkpointing(ema_writer_id)
-
     optimizer = torch.optim.Adam(
         writer_id.parameters(),
         lr=args.lr,

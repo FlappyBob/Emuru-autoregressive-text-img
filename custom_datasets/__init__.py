@@ -1,2 +1,3 @@
 from .load_hf_dataset import DataLoaderManager
 from .load_hf_dataset import Alphabet
+from .load_hf_dataset_htr import ours_DataLoaderManager
